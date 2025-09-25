@@ -34,6 +34,7 @@ struct LazyBinomialHeap
     {
         if((x->val) > (y->val)) swap(x, y);
         (x->cld).push_back(y);
+        y->par = x;
         (x->rnk)++;
         return x;
     }
@@ -98,7 +99,17 @@ struct LazyBinomialHeap
         if(heap.empty()) return INT_MAX;
 
         if(minit != heap.end()) return (**minit).val;
-        else return INT_MAX;
+        else return NULL;
+    }
+
+    void decrease_key(node* x, int val)
+    {
+        x->val -= val;
+        while(x->par != NULL && x->par->val > x->val)
+        {
+            swap(x->val, x->par->val);
+            x = x->par;
+        }
     }
 
     void deletemin()
