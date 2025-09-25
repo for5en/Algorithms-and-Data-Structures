@@ -6,29 +6,19 @@
 
 using namespace std;
 
-int my_log(int x)
-{
-    int i = 0;
-    while(x > 0)
-    {
-        x /= 2;
-        i++;
-    }
-    return i;
-}
-
 struct node
 {
     int val;
     int rnk = 0;
     struct node* par = NULL;
+    list <node*> :: iterator itl;
     list <node*> cld;
 };
 
 struct LazyBinomialHeap
 {
     list <node*> heap;
-    list <node*> :: iterator minit = heap.end();
+    node* minptr = NULL;
 
     node* join(node* x, node* y)
     {
@@ -39,13 +29,16 @@ struct LazyBinomialHeap
         return x;
     }
 
-    void lazy_insert(int val)
+    node* lazy_insert(int val)
     {
         struct node* x = new struct node;
         (x->val) = val;
         heap.push_front(x);
-        if(minit == heap.end()) minit = heap.begin();
-        else if(val < (**minit).val) minit = heap.begin();
+
+        x->itl = heap.begin();
+        if(minptr == NULL || x->val < minptr->val) minptr = x;
+
+        return x;
     }
 
     void lazy_meld(list <node*> heap2)
@@ -55,7 +48,9 @@ struct LazyBinomialHeap
         while(jt != heap2.end())
         {
             heap.push_front(*jt);
-            if(((*jt)->val) < (**minit).val) minit = heap.begin();
+            (*jt)->itl = heap.begin();
+
+            if(((*jt)->val) < (minptr->val)) minptr = *jt;
             jt++;
         }
     }
@@ -64,11 +59,13 @@ struct LazyBinomialHeap
     {
         if(heap.empty()) return;
 
-        int n = max(heap.back()->rnk, my_log(heap.size()));
+        int n = max(heap.back()->rnk, (int)log(heap.size()));
         vector <node*> bkt[n+5];
         list <node*> :: iterator it;
         it = heap.begin();
-        minit = heap.end();
+
+        minptr = NULL;
+
         while(it != heap.end())
         {
             bkt[(*it)->rnk].pb(*it);
@@ -88,8 +85,10 @@ struct LazyBinomialHeap
             if(bkt[i].size() > 0)
             {
                 heap.push_front(bkt[i][0]);
-                if(minit == heap.end()) minit = heap.begin();
-                else if((bkt[i][0]->val) < (**minit).val) minit = heap.begin();
+                bkt[i][0]->itl = heap.begin();
+
+                if(minptr == NULL) minptr = bkt[i][0];
+                else if((bkt[i][0]->val) < (minptr->val)) minptr = bkt[i][0];
             }
         }
     }
@@ -98,8 +97,8 @@ struct LazyBinomialHeap
     {
         if(heap.empty()) return INT_MAX;
 
-        if(minit != heap.end()) return (**minit).val;
-        else return NULL;
+        if(minptr != NULL) return (minptr->val);
+        else return INT_MAX;
     }
 
     void decrease_key(node* x, int val)
@@ -108,16 +107,18 @@ struct LazyBinomialHeap
         while(x->par != NULL && x->par->val > x->val)
         {
             swap(x->val, x->par->val);
+            swap(x->itl, x->par->itl);
             x = x->par;
         }
+        if(x->val < minptr->val) minptr = x;
     }
 
     void deletemin()
     {
         if(heap.empty()) return;
 
-        node* temp = (*minit);
-        heap.erase(minit);
+        node* temp = minptr;
+        heap.erase(minptr->itl);
         this->lazy_meld(temp->cld);
         this->lazy_merge();
     }
@@ -153,7 +154,10 @@ int main()
         heapA.lazy_insert(i);
     }
 
-    for(int i=1; i<=14; i++)
+    node* x = heapA.lazy_insert(100);
+    heapA.decrease_key(x, 110);
+
+    for(int i=1; i<=16; i++)
     {
         heapA.print();
         cout << heapA.extract_min() << "\n";
