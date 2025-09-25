@@ -95,23 +95,15 @@ struct LazyBinomialHeap
 
     int extract_min()
     {
-        if(heap.empty())
-        {
-            cout << "Heap empty!\n";
-            return -1;
-        }
+        if(heap.empty()) return INT_MAX;
 
         if(minit != heap.end()) return (**minit).val;
-        else return NULL;
+        else return INT_MAX;
     }
 
     void deletemin()
     {
-        if(heap.empty())
-        {
-            cout << "Heap empty!\n";
-            return;
-        }
+        if(heap.empty()) return;
 
         node* temp = (*minit);
         heap.erase(minit);
